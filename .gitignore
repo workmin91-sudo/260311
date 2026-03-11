@@ -16,3 +16,9 @@ npm-debug.log*
 # Temporary files
 *.tmp
 *.temp
+
+# Supabase 설정 파일 (민감한 정보 포함)
+config.js
+
+# Vercel
+.vercel
