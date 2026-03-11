@@ -10,7 +10,7 @@ export default function handler(req, res) {
     // Vercel 환경변수에서 Supabase 설정 읽기
     const config = {
         url: process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '',
-        anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || ''
+        anonKey: process.env.pokekey || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || ''
     };
     
     // 환경변수가 설정되어 있으면 반환

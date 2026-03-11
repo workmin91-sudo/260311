@@ -26,8 +26,8 @@
    - Environment: Production, Preview, Development 모두 선택
 
    **변수 2:**
-   - Key: `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - Value: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...` (실제 anon key)
+   - Key: `pokekey`
+   - Value: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...` (실제 anon key - 환경변수로 설정)
    - Environment: Production, Preview, Development 모두 선택
 
 4. "Save" 클릭
@@ -42,8 +42,8 @@ npm i -g vercel
 vercel env add NEXT_PUBLIC_SUPABASE_URL
 # 프롬프트에 따라 값 입력
 
-vercel env add NEXT_PUBLIC_SUPABASE_ANON_KEY
-# 프롬프트에 따라 값 입력
+vercel env add pokekey
+# 프롬프트에 따라 값 입력 (Supabase anon key)
 
 # 환경변수 배포
 vercel --prod

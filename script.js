@@ -4,22 +4,7 @@ let supabaseInitialized = false;
 
 // Supabase 설정 로드 함수
 async function loadSupabaseConfig() {
-    // 1순위: 전역 변수에서 읽기 (HTML에 직접 주입된 경우)
-    if (typeof window !== 'undefined' && window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
-        console.log('전역 변수에서 Supabase 설정 로드 완료');
-        return {
-            url: window.SUPABASE_URL,
-            anonKey: window.SUPABASE_ANON_KEY
-        };
-    }
-    
-    // 2순위: config.js 파일에서 읽기 (로컬 개발 및 GitHub Pages용)
-    if (typeof SUPABASE_CONFIG !== 'undefined' && SUPABASE_CONFIG.url && SUPABASE_CONFIG.anonKey) {
-        console.log('config.js에서 Supabase 설정 로드 완료');
-        return SUPABASE_CONFIG;
-    }
-    
-    // 3순위: API 엔드포인트에서 환경변수 읽기 (Vercel)
+    // 1순위: API 엔드포인트에서 환경변수 읽기 (Vercel)
     try {
         const response = await fetch('/api/env');
         if (response.ok) {
@@ -30,7 +15,22 @@ async function loadSupabaseConfig() {
             }
         }
     } catch (error) {
-        console.log('API 엔드포인트에서 설정을 불러올 수 없습니다 (GitHub Pages 또는 로컬 개발 모드):', error.message);
+        console.log('API 엔드포인트에서 설정을 불러올 수 없습니다 (로컬 개발 모드일 수 있음):', error.message);
+    }
+    
+    // 2순위: 전역 변수에서 읽기 (HTML에 직접 주입된 경우)
+    if (typeof window !== 'undefined' && window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
+        console.log('전역 변수에서 Supabase 설정 로드 완료');
+        return {
+            url: window.SUPABASE_URL,
+            anonKey: window.SUPABASE_ANON_KEY
+        };
+    }
+    
+    // 3순위: config.js 파일에서 읽기 (로컬 개발용)
+    if (typeof SUPABASE_CONFIG !== 'undefined' && SUPABASE_CONFIG.url && SUPABASE_CONFIG.anonKey) {
+        console.log('config.js에서 Supabase 설정 로드 완료');
+        return SUPABASE_CONFIG;
     }
     
     return null;
@@ -44,13 +44,9 @@ async function initializeSupabase() {
     if (supabaseConfig && supabaseConfig.url && supabaseConfig.anonKey) {
         supabaseClient = supabase.createClient(supabaseConfig.url, supabaseConfig.anonKey);
         supabaseInitialized = true;
-        console.log('Supabase 클라이언트 초기화 완료', { url: supabaseConfig.url });
+        console.log('Supabase 클라이언트 초기화 완료');
     } else {
-        console.error('Supabase 설정이 없습니다. config.js 파일을 확인하세요.');
-        console.error('현재 설정:', { 
-            hasWindowConfig: !!(typeof window !== 'undefined' && window.SUPABASE_URL),
-            hasGlobalConfig: typeof SUPABASE_CONFIG !== 'undefined'
-        });
+        console.warn('Supabase 설정이 없습니다. Vercel 환경변수 또는 config.js를 확인하세요.');
     }
 }
 
@@ -834,7 +830,7 @@ async function animateLottoDrawing(finalNumbers, setIndex, totalSets) {
             if (drawnCount >= 6) {
                 // 모든 번호 추첨 완료
                 if (drawingMessage) {
-                    drawingMessage.textContent = '번호 생성 완료!';
+                    drawingMessage.textContent = '포켓몬 잡기 완료! 아래에서 잡은 포켓몬을 확인하세요!';
                 }
                 
                 // 페이드 아웃 애니메이션
@@ -1188,7 +1184,7 @@ function displayResults(sets) {
     resultsDiv.innerHTML = '';
     
     if (sets.length === 0) {
-        resultsDiv.innerHTML = '<div class="empty-state">포켓볼을 던져서 번호를 생성해주세요!</div>';
+        resultsDiv.innerHTML = '';
         return;
     }
     
@@ -1302,7 +1298,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             
             // 모든 추첨이 끝난 후 결과 표시
             displayResults(sets);
-            updateMessage('번호 생성 완료!');
+            updateMessage('포켓몬 잡기 완료! 아래에서 잡은 포켓몬을 확인하세요!');
             updateLuckBar(100);
             
             // Supabase에 저장 (로또 번호 = 포켓몬 번호이므로 sets를 그대로 사용)
@@ -1335,5 +1331,5 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     // 초기 빈 상태 표시
     displayResults([]);
-    updateMessage('포켓몬을 선택하여 번호를 생성하세요!');
+    updateMessage('FIGHT를 눌러 로또 포켓몬을 잡아보세요!');
 });
