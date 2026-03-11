@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>포켓몬 로또 - 포켓몬을 잡아라!</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="pokemon-background" id="pokemonBackground"></div>
+    
+    <div id="drawingArea" class="drawing-area" style="display: none;">
+        <div class="drawing-content">
+            <div class="drawing-title">포켓볼에서 포켓몬이 나온다!</div>
+            <div class="pokeball-container">
+                <div class="pokeball" id="pokeball">
+                    <div class="pokeball-top"></div>
+                    <div class="pokeball-bottom"></div>
+                    <div class="pokeball-center"></div>
+                    <div id="pokemonInside" class="pokemon-inside"></div>
+                </div>
+            </div>
+            <div id="selectedBalls" class="selected-balls"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <header>
+            <div class="pokemon-header">
+                <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png" alt="피카츄" class="header-pokemon">
+                <h1>포켓몬 로또</h1>
+                <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/6.png" alt="리자몽" class="header-pokemon">
+            </div>
+            <p>포켓몬을 잡아서 행운의 번호를 얻어라!</p>
+            <div class="pokemon-decorations" id="headerPokemon"></div>
+        </header>
+
+        <div class="pokemon-showcase" id="pokemonShowcase"></div>
+
+        <div class="controls">
+            <div class="input-group">
+                <label for="setCount">
+                    <span class="pokemon-label-icon">🎯</span>
+                    생성할 세트 수
+                </label>
+                <input type="number" id="setCount" min="1" max="10" value="1">
+            </div>
+            <button id="generateBtn" class="generate-btn pokeball-btn">
+                <span class="btn-pokemon">⚡</span>
+                <span>포켓볼 던지기!</span>
+                <span class="btn-pokemon">🔥</span>
+            </button>
+        </div>
+
+        <div id="results" class="results"></div>
+
+        <div class="recent-winners-section">
+            <h2>
+                <span class="pokemon-icon">🏆</span>
+                최근 5회 당첨번호
+                <span class="pokemon-icon">🏆</span>
+            </h2>
+            <div id="recentWinners" class="recent-winners-compact">
+                <div class="loading">포켓몬이 당첨번호를 불러오는 중...</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
