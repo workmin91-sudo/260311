@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>포켓몬 로또 - 게임보이 스타일</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="gameboy-screen">
+        <div class="screen-border">
+            <div class="screen-content">
+                <!-- 배틀 화면 스타일 헤더 -->
+                <div class="battle-header">
+                    <div class="trainer-sprite" id="trainerSprite"></div>
+                    <div class="battle-info">
+                        <div class="hp-bar-container">
+                            <div class="hp-label">LUCK</div>
+                            <div class="hp-bar">
+                                <div class="hp-fill" id="luckBar"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 포켓몬 쇼케이스 -->
+                <div class="pokemon-showcase" id="pokemonShowcase"></div>
+
+                <!-- 배틀 메뉴 스타일 컨트롤 -->
+                <div class="battle-menu">
+                    <div class="menu-box">
+                        <div class="menu-option" id="generateBtn">
+                            <span class="menu-cursor">►</span>FIGHT
+                        </div>
+                        <div class="menu-option">
+                            <span class="menu-cursor"> </span>PKMN
+                        </div>
+                        <div class="menu-option">
+                            <span class="menu-cursor"> </span>PACK
+                        </div>
+                        <div class="menu-option">
+                            <span class="menu-cursor"> </span>RUN
+                        </div>
+                    </div>
+                    <div class="input-box">
+                        <div class="text-box">
+                            <span>SET COUNT:</span>
+                            <input type="number" id="setCount" min="1" max="10" value="1" class="pixel-input">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 결과 표시 영역 -->
+                <div id="results" class="results"></div>
+
+                <!-- 메시지 박스 -->
+                <div class="message-box" id="messageBox">
+                    <div class="message-text">포켓몬을 선택하여 번호를 생성하세요!</div>
+                </div>
+
+                <!-- 최근 당첨번호 -->
+                <div class="recent-section">
+                    <div class="section-title">RECENT WINNERS</div>
+                    <div id="recentWinners" class="recent-winners">
+                        <div class="loading">로딩 중...</div>
+                    </div>
+                </div>
+
+                <!-- 배경 포켓몬들 -->
+                <div class="pokemon-background" id="pokemonBackground"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 추첨 애니메이션 영역 -->
+    <div id="drawingArea" class="drawing-area" style="display: none;">
+        <div class="drawing-content">
+            <div class="battle-screen">
+                <div class="opponent-pokemon" id="opponentPokemon"></div>
+                <div class="player-pokemon" id="playerPokemon"></div>
+                <div class="battle-message">
+                    <div class="message-box">
+                        <div class="message-text" id="drawingMessage">포켓볼에서 포켓몬이 나온다!</div>
+                    </div>
+                </div>
+                <div id="selectedBalls" class="selected-balls"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

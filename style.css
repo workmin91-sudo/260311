@@ -1,0 +1,570 @@
+/* 픽셀 아트 게임보이 스타일 */
+@font-face {
+    font-family: 'PixelFont';
+    src: url('data:font/woff2;base64,') format('woff2');
+    font-display: swap;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+}
+
+:root {
+    /* 게임보이 색상 팔레트 */
+    --gb-dark: #0f380f;
+    --gb-green-1: #306230;
+    --gb-green-2: #8bac0f;
+    --gb-green-3: #9bbc0f;
+    --gb-white: #ffffff;
+    --gb-black: #000000;
+    --gb-red: #ff0000;
+    --gb-blue: #3060ff;
+    --gb-yellow: #ffff00;
+}
+
+body {
+    font-family: 'Courier New', monospace;
+    background: var(--gb-dark);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    color: var(--gb-black);
+    overflow-x: hidden;
+}
+
+/* 게임보이 화면 */
+.gameboy-screen {
+    width: 100%;
+    max-width: 600px;
+    background: var(--gb-green-1);
+    border: 8px solid var(--gb-dark);
+    border-radius: 4px;
+    box-shadow: 
+        0 0 0 4px var(--gb-green-2),
+        0 0 0 8px var(--gb-dark),
+        0 20px 40px rgba(0, 0, 0, 0.5);
+}
+
+.screen-border {
+    background: var(--gb-green-2);
+    padding: 16px;
+    border: 4px solid var(--gb-dark);
+}
+
+.screen-content {
+    background: var(--gb-green-3);
+    min-height: 500px;
+    padding: 16px;
+    border: 3px solid var(--gb-dark);
+    position: relative;
+    overflow: hidden;
+}
+
+/* 배틀 헤더 */
+.battle-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding: 8px;
+    background: var(--gb-green-2);
+    border: 2px solid var(--gb-dark);
+}
+
+.trainer-sprite {
+    width: 64px;
+    height: 64px;
+    background: var(--gb-green-3);
+    border: 2px solid var(--gb-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+}
+
+.battle-info {
+    flex: 1;
+    margin-left: 16px;
+}
+
+.hp-bar-container {
+    background: var(--gb-white);
+    border: 2px solid var(--gb-dark);
+    padding: 4px;
+}
+
+.hp-label {
+    font-size: 10px;
+    font-weight: bold;
+    margin-bottom: 2px;
+    color: var(--gb-black);
+}
+
+.hp-bar {
+    width: 100%;
+    height: 12px;
+    background: var(--gb-dark);
+    border: 1px solid var(--gb-black);
+    position: relative;
+}
+
+.hp-fill {
+    height: 100%;
+    background: var(--gb-green-3);
+    width: 100%;
+    transition: width 0.3s;
+    border-right: 1px solid var(--gb-black);
+}
+
+/* 포켓몬 쇼케이스 */
+.pokemon-showcase {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 8px;
+    margin-bottom: 16px;
+    padding: 8px;
+    background: var(--gb-green-2);
+    border: 2px solid var(--gb-dark);
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.pokemon-card {
+    background: var(--gb-white);
+    border: 2px solid var(--gb-dark);
+    padding: 4px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.1s;
+    image-rendering: pixelated;
+}
+
+.pokemon-card:hover {
+    background: var(--gb-green-3);
+    transform: scale(1.1);
+}
+
+.pokemon-card-image {
+    width: 100%;
+    height: 64px;
+    object-fit: contain;
+    image-rendering: pixelated;
+    margin-bottom: 4px;
+}
+
+.pokemon-card-name {
+    font-size: 8px;
+    font-weight: bold;
+    color: var(--gb-black);
+    text-transform: uppercase;
+}
+
+.pokemon-card-id {
+    font-size: 6px;
+    color: var(--gb-dark);
+}
+
+/* 배틀 메뉴 */
+.battle-menu {
+    margin-bottom: 16px;
+}
+
+.menu-box {
+    background: var(--gb-white);
+    border: 3px solid var(--gb-dark);
+    padding: 8px;
+    margin-bottom: 8px;
+}
+
+.menu-option {
+    font-size: 14px;
+    font-weight: bold;
+    padding: 4px 8px;
+    cursor: pointer;
+    color: var(--gb-black);
+    text-transform: uppercase;
+    transition: background 0.1s;
+}
+
+.menu-option:hover {
+    background: var(--gb-green-3);
+}
+
+.menu-option.selected {
+    background: var(--gb-green-2);
+}
+
+.menu-cursor {
+    display: inline-block;
+    width: 12px;
+    color: var(--gb-black);
+}
+
+.input-box {
+    background: var(--gb-white);
+    border: 3px solid var(--gb-dark);
+    padding: 8px;
+}
+
+.text-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: bold;
+    color: var(--gb-black);
+}
+
+.pixel-input {
+    background: var(--gb-green-3);
+    border: 2px solid var(--gb-dark);
+    padding: 4px 8px;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    font-weight: bold;
+    color: var(--gb-black);
+    width: 60px;
+    text-align: center;
+}
+
+.pixel-input:focus {
+    outline: none;
+    background: var(--gb-green-2);
+}
+
+/* 결과 영역 */
+.results {
+    margin-bottom: 16px;
+}
+
+.lotto-set {
+    background: var(--gb-white);
+    border: 3px solid var(--gb-dark);
+    padding: 12px;
+    margin-bottom: 12px;
+}
+
+.set-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--gb-dark);
+}
+
+.set-title {
+    font-size: 14px;
+    font-weight: bold;
+    color: var(--gb-black);
+    text-transform: uppercase;
+}
+
+.set-number {
+    font-size: 10px;
+    color: var(--gb-dark);
+    font-family: 'Courier New', monospace;
+}
+
+.numbers {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.number-ball {
+    width: 48px;
+    height: 48px;
+    border-radius: 0;
+    border: 3px solid var(--gb-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: bold;
+    color: var(--gb-black);
+    background: var(--gb-white);
+    position: relative;
+    overflow: hidden;
+    image-rendering: pixelated;
+}
+
+.number-ball-pokemon {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    image-rendering: pixelated;
+    opacity: 0.6;
+    z-index: 1;
+}
+
+.number-ball-text {
+    position: relative;
+    z-index: 2;
+    text-shadow: 1px 1px 0 var(--gb-white);
+}
+
+/* 메시지 박스 */
+.message-box {
+    background: var(--gb-white);
+    border: 3px solid var(--gb-dark);
+    padding: 12px;
+    margin-bottom: 16px;
+    min-height: 60px;
+}
+
+.message-text {
+    font-size: 12px;
+    font-weight: bold;
+    color: var(--gb-black);
+    line-height: 1.4;
+    text-transform: uppercase;
+}
+
+/* 최근 당첨번호 */
+.recent-section {
+    background: var(--gb-green-2);
+    border: 3px solid var(--gb-dark);
+    padding: 12px;
+    margin-bottom: 16px;
+}
+
+.section-title {
+    font-size: 12px;
+    font-weight: bold;
+    color: var(--gb-black);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    text-align: center;
+    padding: 4px;
+    background: var(--gb-white);
+    border: 2px solid var(--gb-dark);
+}
+
+.recent-winners {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.winner-item-compact {
+    background: var(--gb-white);
+    border: 2px solid var(--gb-dark);
+    padding: 8px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.winner-round-compact {
+    font-size: 10px;
+    font-weight: bold;
+    color: var(--gb-black);
+    min-width: 60px;
+    text-transform: uppercase;
+}
+
+.winner-numbers-compact {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    flex: 1;
+}
+
+.winner-number-ball-compact {
+    width: 32px;
+    height: 32px;
+    border: 2px solid var(--gb-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: bold;
+    color: var(--gb-black);
+    background: var(--gb-white);
+    position: relative;
+    overflow: hidden;
+    image-rendering: pixelated;
+}
+
+.winner-ball-pokemon {
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    image-rendering: pixelated;
+    opacity: 0.5;
+    z-index: 1;
+}
+
+.winner-ball-text {
+    position: relative;
+    z-index: 2;
+    font-size: 10px;
+}
+
+/* 배경 포켓몬 */
+.pokemon-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.1;
+}
+
+.pokemon-float {
+    position: absolute;
+    image-rendering: pixelated;
+}
+
+.pokemon-bg-image {
+    width: 48px;
+    height: 48px;
+    image-rendering: pixelated;
+    filter: contrast(1.2);
+}
+
+/* 추첨 애니메이션 영역 */
+.drawing-area {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--gb-dark);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.drawing-content {
+    width: 100%;
+    max-width: 600px;
+    padding: 20px;
+}
+
+.battle-screen {
+    background: var(--gb-green-3);
+    border: 4px solid var(--gb-dark);
+    padding: 20px;
+    min-height: 400px;
+    position: relative;
+}
+
+.opponent-pokemon,
+.player-pokemon {
+    width: 120px;
+    height: 120px;
+    border: 3px solid var(--gb-dark);
+    background: var(--gb-white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    image-rendering: pixelated;
+    margin: 20px auto;
+}
+
+.opponent-pokemon img,
+.player-pokemon img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    image-rendering: pixelated;
+}
+
+.battle-message {
+    margin-top: 20px;
+}
+
+.selected-balls {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
+
+.selected-ball {
+    width: 48px;
+    height: 48px;
+    border: 3px solid var(--gb-dark);
+    background: var(--gb-white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: bold;
+    color: var(--gb-black);
+    image-rendering: pixelated;
+}
+
+/* 로딩 */
+.loading {
+    text-align: center;
+    font-size: 12px;
+    font-weight: bold;
+    color: var(--gb-black);
+    padding: 20px;
+    text-transform: uppercase;
+}
+
+/* 스크롤바 스타일 */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--gb-green-2);
+    border: 1px solid var(--gb-dark);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--gb-dark);
+    border: 1px solid var(--gb-black);
+}
+
+/* 애니메이션 */
+@keyframes pixelBounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-4px);
+    }
+}
+
+.pokemon-card {
+    animation: pixelBounce 2s ease-in-out infinite;
+}
+
+/* 반응형 */
+@media (max-width: 600px) {
+    .gameboy-screen {
+        max-width: 100%;
+    }
+    
+    .screen-content {
+        padding: 8px;
+    }
+    
+    .pokemon-showcase {
+        grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+    }
+    
+    .number-ball {
+        width: 40px;
+        height: 40px;
+        font-size: 14px;
+    }
+}
