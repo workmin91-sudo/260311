@@ -260,71 +260,63 @@ const realRecentWinners = [
     // 더 많은 실제 데이터는 API에서 가져오거나 추가 가능
 ];
 
-// 최근 당첨번호 가져오기 (동행복권 API 사용)
+// 최근 당첨번호 가져오기 (최적화: 빠른 로딩)
 async function fetchRecentWinners() {
     try {
-        // 최신 회차부터 역순으로 가져오기
-        const latestRound = await getLatestRound();
-        const winners = [];
-        
-        // 최근 5회 가져오기
-        for (let i = 0; i < 5; i++) {
-            try {
-                const round = latestRound - i;
-                const data = await fetchWinnerData(round);
-                if (data) {
-                    winners.push(data);
-                }
-            } catch (e) {
-                // API 실패 시 건너뛰기
-            }
-        }
-        
-        // 최근 1개년 데이터 가져오기 (약 52주)
-        const oneYearWinners = [];
-        for (let i = 0; i < 52 && i < latestRound; i++) {
-            try {
-                const round = latestRound - i;
-                const data = await fetchWinnerData(round);
-                if (data) {
-                    oneYearWinners.push(data);
-                }
-            } catch (e) {
-                // 일부 회차는 건너뛰기
-            }
-        }
-        
-        // 실제 데이터가 있으면 우선 사용
-        if (realRecentWinners.length > 0 && winners.length < 5) {
-            const realData = realRecentWinners.slice(0, 5 - winners.length);
-            winners = [...realData, ...winners].slice(0, 5);
-        }
-        
-        // 데이터가 충분하지 않으면 샘플 데이터로 보완
-        if (oneYearWinners.length < 20) {
-            const sampleData = generateSampleData(latestRound);
-            // 실제 데이터 우선 사용
-            oneYearWinners.unshift(...realRecentWinners);
-            oneYearWinners.push(...sampleData.slice(realRecentWinners.length));
-        } else {
-            // 실제 데이터를 앞에 추가
-            oneYearWinners.unshift(...realRecentWinners);
-        }
-        
-        recentWinnersData = oneYearWinners;
-        calculateFrequency();
-        
-        // 최근 5개 표시
-        if (winners.length >= 5) {
-            displayRecentWinners(winners.slice(0, 5));
-        } else if (realRecentWinners.length >= 5) {
+        // 즉시 실제 데이터로 표시 (빠른 응답)
+        if (realRecentWinners.length >= 5) {
             displayRecentWinners(realRecentWinners.slice(0, 5));
-        } else {
-            const displayData = winners.length > 0 ? winners : generateSampleData(latestRound).slice(0, 5);
-            displayRecentWinners(displayData);
         }
         
-        return winners;
+        // 백그라운드에서 추가 데이터 수집 (비동기)
+        setTimeout(async () => {
+            try {
+                const latestRound = await getLatestRound();
+                const winners = [];
+                
+                // 최근 5회만 빠르게 가져오기 (타임아웃 설정)
+                const fetchPromises = [];
+                for (let i = 0; i < 5; i++) {
+                    const round = latestRound - i;
+                    fetchPromises.push(
+                        Promise.race([
+                            fetchWinnerData(round),
+                            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 2000))
+                        ]).catch(() => null)
+                    );
+                }
+                
+                const results = await Promise.all(fetchPromises);
+                results.forEach(data => {
+                    if (data) winners.push(data);
+                });
+                
+                // 실제 데이터와 병합
+                if (winners.length > 0) {
+                    const allWinners = [...realRecentWinners, ...winners]
+                        .filter((v, i, a) => a.findIndex(t => t.round === v.round) === i)
+                        .sort((a, b) => b.round - a.round)
+                        .slice(0, 5);
+                    displayRecentWinners(allWinners);
+                }
+                
+                // 최근 1개년 데이터는 샘플로 빠르게 생성 (API 호출 최소화)
+                const sampleData = generateSampleData(latestRound);
+                recentWinnersData = [...realRecentWinners, ...sampleData].slice(0, 52);
+                calculateFrequency();
+            } catch (error) {
+                console.log('백그라운드 데이터 로딩 실패:', error);
+                // 샘플 데이터로 보완
+                const sampleData = generateSampleData(1220);
+                recentWinnersData = [...realRecentWinners, ...sampleData].slice(0, 52);
+                calculateFrequency();
+            }
+        }, 100);
+        
+        // 즉시 반환 (빠른 응답)
+        recentWinnersData = realRecentWinners;
+        calculateFrequency();
+        return realRecentWinners.slice(0, 5);
     } catch (error) {
         console.error('당첨번호를 가져오는 중 오류:', error);
         // 샘플 데이터 사용
@@ -350,18 +342,24 @@ async function getLatestRound() {
     return 1220; // 기본값
 }
 
-// 특정 회차 당첨번호 가져오기
+// 특정 회차 당첨번호 가져오기 (타임아웃 설정)
 async function fetchWinnerData(round) {
     try {
+        // 타임아웃 설정 (1.5초)
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 1500);
+        
         // 동행복권 API 호출 (CORS 문제 가능성 있음)
-        // JSONP 방식으로 시도하거나 프록시 서버 사용 필요
         const response = await fetch(`https://www.dhlottery.co.kr/common.do?method=getLottoNumber&drwNo=${round}`, {
             method: 'GET',
             mode: 'cors',
             headers: {
                 'Accept': 'application/json'
-            }
+            },
+            signal: controller.signal
         });
+        
+        clearTimeout(timeoutId);
         
         if (response.ok) {
             const data = await response.json();
@@ -377,7 +375,7 @@ async function fetchWinnerData(round) {
             }
         }
     } catch (e) {
-        // CORS 또는 네트워크 오류 - 조용히 실패 처리
+        // CORS, 네트워크 오류 또는 타임아웃 - 조용히 실패 처리
     }
     return null;
 }
@@ -488,34 +486,20 @@ function displayRecentWinners(winners) {
     container.innerHTML = '';
     
     if (winners.length === 0) {
-        container.innerHTML = '<div class="loading">포켓몬이 당첨번호 데이터를 불러올 수 없습니다.</div>';
+        container.innerHTML = '<div class="loading"><span class="loading-text">포켓몬이 당첨번호 데이터를 불러올 수 없습니다</span></div>';
         return;
     }
     
     winners.forEach((winner, winnerIndex) => {
-        // 각 당첨번호마다 랜덤 포켓몬 선택
-        const winnerPokemon = [];
-        const usedIds = new Set();
-        for (let i = 0; i < 6; i++) {
-            let pokemonId;
-            do {
-                pokemonId = Math.floor(Math.random() * 151) + 1;
-            } while (usedIds.has(pokemonId));
-            usedIds.add(pokemonId);
-            winnerPokemon.push(pokemonList[pokemonId - 1]);
-        }
+        // 로또 번호와 동일한 포켓몬 번호 사용 (1-45)
+        const winnerPokemon = winner.numbers.map(num => pokemonList[num - 1]);
         
         const item = document.createElement('div');
         item.className = 'winner-item-compact';
         
         const round = document.createElement('div');
         round.className = 'winner-round-compact';
-        round.innerHTML = `
-            <div>${winner.round}회</div>
-            <div class="winner-pokemon-preview">
-                ${winnerPokemon.slice(0, 2).map(p => `<img src="${p.imageUrl}" alt="${p.name}" class="winner-pokemon-icon" onerror="this.src='${p.imageUrlBackup}'; this.onerror=null;">`).join('')}
-            </div>
-        `;
+        round.textContent = `${winner.round}회`;
         
         const numbers = document.createElement('div');
         numbers.className = 'winner-numbers-compact';
@@ -840,7 +824,7 @@ async function animateLottoDrawing(finalNumbers, setIndex, totalSets) {
         
         // 각 번호를 순차적으로 추첨
         let drawnCount = 0;
-        const selectedPokemon = [];
+        const selectedPokemonData = [];
         
         const drawNext = () => {
             if (drawnCount >= 6) {
@@ -859,17 +843,18 @@ async function animateLottoDrawing(finalNumbers, setIndex, totalSets) {
             
             const finalNumber = finalNumbers[drawnCount];
             
-            // 랜덤 포켓몬 선택
-            const randomPokemon = pokemonList[Math.floor(Math.random() * pokemonList.length)];
-            selectedPokemon.push(randomPokemon);
+            // 로또 번호와 동일한 포켓몬 번호 사용 (1-45)
+            const pokemonId = finalNumber; // 로또 번호 = 포켓몬 번호
+            const selectedPokemon = pokemonList[pokemonId - 1];
+            selectedPokemonData.push(selectedPokemon);
             
             // 배틀 화면에 포켓몬 표시
             if (opponentPokemon) {
-                opponentPokemon.innerHTML = `<img src="${randomPokemon.imageUrl}" alt="${randomPokemon.name}" onerror="this.src='${randomPokemon.imageUrlBackup}'; this.onerror=null;">`;
+                opponentPokemon.innerHTML = `<img src="${selectedPokemon.imageUrl}" alt="${selectedPokemon.name}" onerror="this.src='${selectedPokemon.imageUrlBackup}'; this.onerror=null;">`;
             }
             
             if (drawingMessage) {
-                drawingMessage.textContent = `${randomPokemon.name.toUpperCase()}가 나타났다! 번호: ${finalNumber}`;
+                drawingMessage.textContent = `${selectedPokemon.name.toUpperCase()}가 나타났다! 번호: ${finalNumber}`;
             }
             
             // 번호가 나오는 애니메이션
@@ -882,8 +867,7 @@ async function animateLottoDrawing(finalNumbers, setIndex, totalSets) {
                     selectedBalls.appendChild(selectedBall);
                 }
                 
-                // 포켓몬 표시 업데이트
-                updatePokemonShowcase(selectedPokemon);
+                // 포켓몬 표시 업데이트는 제거 (쇼케이스 삭제됨)
                 
                 // 사운드 효과
                 playRevealSound();
@@ -907,23 +891,7 @@ async function animateLottoDrawing(finalNumbers, setIndex, totalSets) {
 }
 
 // 포켓몬 쇼케이스 업데이트
-function updatePokemonShowcase(pokemonArray) {
-    const showcase = document.getElementById('pokemonShowcase');
-    if (!showcase) return;
-    showcase.innerHTML = '';
-    
-    pokemonArray.forEach((poke, index) => {
-        const card = document.createElement('div');
-        card.className = 'pokemon-card';
-        card.style.animationDelay = `${index * 0.1}s`;
-        card.innerHTML = `
-            <img src="${poke.imageUrl}" alt="${poke.name}" class="pokemon-card-image" onerror="this.src='${poke.imageUrlBackup}'; this.onerror=null;">
-            <div class="pokemon-card-name">${poke.name}</div>
-            <div class="pokemon-card-id">#${String(poke.id).padStart(3, '0')}</div>
-        `;
-        showcase.appendChild(card);
-    });
-}
+// 포켓몬 쇼케이스 함수 제거됨 (더 이상 사용하지 않음)
 
 // 메시지 박스 업데이트
 function updateMessage(text) {
@@ -947,9 +915,38 @@ function updateLuckBar(percentage) {
 // 트레이너 캐릭터 표시
 function displayTrainer() {
     const trainerSprite = document.getElementById('trainerSprite');
-    // 트레이너 스프라이트는 CSS로 표시하거나 이모지로 대체
-    trainerSprite.textContent = '👤';
-    trainerSprite.style.fontSize = '48px';
+    if (!trainerSprite) return;
+    
+    // 이미지 파일을 사용하여 트레이너 스프라이트 표시
+    trainerSprite.innerHTML = '';
+    
+    const img = document.createElement('img');
+    // 이미지 경로 설정 (상대 경로)
+    img.src = 'assets/trainer-sprite.png';
+    img.alt = 'Trainer';
+    img.style.width = '100%';
+    img.style.height = '100%';
+    img.style.objectFit = 'contain';
+    img.style.imageRendering = 'pixelated';
+    img.style.display = 'block';
+    
+    img.onerror = function() {
+        console.error('트레이너 이미지 로드 실패:', img.src);
+        // 이미지 로드 실패 시 대체 표시
+        trainerSprite.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; font-size: 10px; color: var(--gb-dark); background: var(--gb-green-3); border: 1px solid var(--gb-dark); text-align: center; padding: 4px;">이미지를<br>불러올 수 없습니다</div>';
+    };
+    
+    img.onload = function() {
+        console.log('트레이너 이미지 로드 성공:', img.src);
+    };
+    
+    trainerSprite.appendChild(img);
+    
+    // 트레이너 정보 업데이트
+    const trainerName = document.getElementById('trainerName');
+    const trainerId = document.getElementById('trainerId');
+    if (trainerName) trainerName.textContent = 'TRAINER';
+    if (trainerId) trainerId.textContent = 'No. 00001';
 }
 
 // 배경에 포켓몬 추가 (픽셀 스프라이트)
@@ -1033,10 +1030,11 @@ async function saveNumbersToSupabase(sets, pokemonIds) {
     }
     
     try {
+        // 로또 번호와 동일한 포켓몬 번호 사용 (1-45)
         const records = sets.map((numbers, index) => ({
             numbers: numbers,
             set_count: sets.length,
-            pokemon_ids: pokemonIds[index] || [],
+            pokemon_ids: numbers, // 로또 번호 = 포켓몬 번호
             user_ip: null, // 필요시 추가
             user_agent: navigator.userAgent
         }));
@@ -1086,18 +1084,29 @@ async function loadSavedNumbers(limit = 10) {
 }
 
 // 저장된 번호 표시
+// 페이징 상태 관리
+let currentSavedPage = 1;
+const itemsPerPage = 2;
+
 function displaySavedNumbers(savedData) {
     const container = document.getElementById('savedNumbers');
     if (!container) return;
     
     if (savedData.length === 0) {
-        container.innerHTML = '<div class="loading">저장된 번호가 없습니다.</div>';
+        container.innerHTML = '<div class="loading"><span class="loading-text">저장된 번호가 없습니다</span></div>';
         return;
     }
     
+    // 페이징 계산
+    const totalPages = Math.ceil(savedData.length / itemsPerPage);
+    const startIndex = (currentSavedPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const currentPageData = savedData.slice(startIndex, endIndex);
+    
     container.innerHTML = '';
     
-    savedData.forEach((record, index) => {
+    // 현재 페이지 데이터 표시
+    currentPageData.forEach((record, index) => {
         const item = document.createElement('div');
         item.className = 'winner-item-compact';
         
@@ -1112,10 +1121,17 @@ function displaySavedNumbers(savedData) {
         const numbers = document.createElement('div');
         numbers.className = 'winner-numbers-compact';
         
-        record.numbers.forEach((num) => {
+        // 로또 번호와 동일한 포켓몬 번호 사용 (1-45)
+        const savedPokemon = record.numbers.map(num => pokemonList[num - 1]);
+        
+        record.numbers.forEach((num, numIndex) => {
             const ball = document.createElement('div');
             ball.className = `winner-number-ball-compact ${getNumberClass(num)}`;
-            ball.innerHTML = `<span class="winner-ball-text">${num}</span>`;
+            const pokemon = savedPokemon[numIndex];
+            ball.innerHTML = `
+                <img src="${pokemon.imageUrl}" alt="${pokemon.name}" class="winner-ball-pokemon" onerror="this.src='${pokemon.imageUrlBackup}'; this.onerror=null;">
+                <span class="winner-ball-text">${num}</span>
+            `;
             numbers.appendChild(ball);
         });
         
@@ -1123,6 +1139,43 @@ function displaySavedNumbers(savedData) {
         item.appendChild(numbers);
         container.appendChild(item);
     });
+    
+    // 페이징 컨트롤 추가
+    if (totalPages > 1) {
+        const pagination = document.createElement('div');
+        pagination.className = 'pagination-controls';
+        
+        const prevBtn = document.createElement('button');
+        prevBtn.className = 'pagination-btn';
+        prevBtn.textContent = '◀';
+        prevBtn.disabled = currentSavedPage === 1;
+        prevBtn.addEventListener('click', () => {
+            if (currentSavedPage > 1) {
+                currentSavedPage--;
+                displaySavedNumbers(savedData);
+            }
+        });
+        
+        const pageInfo = document.createElement('span');
+        pageInfo.className = 'pagination-info';
+        pageInfo.textContent = `${currentSavedPage} / ${totalPages}`;
+        
+        const nextBtn = document.createElement('button');
+        nextBtn.className = 'pagination-btn';
+        nextBtn.textContent = '▶';
+        nextBtn.disabled = currentSavedPage === totalPages;
+        nextBtn.addEventListener('click', () => {
+            if (currentSavedPage < totalPages) {
+                currentSavedPage++;
+                displaySavedNumbers(savedData);
+            }
+        });
+        
+        pagination.appendChild(prevBtn);
+        pagination.appendChild(pageInfo);
+        pagination.appendChild(nextBtn);
+        container.appendChild(pagination);
+    }
 }
 
 // 결과 표시 함수
@@ -1136,17 +1189,8 @@ function displayResults(sets) {
     }
     
     sets.forEach((numbers, index) => {
-        // 각 세트마다 랜덤 포켓몬 선택
-        const setPokemon = [];
-        const usedIds = new Set();
-        for (let i = 0; i < 6; i++) {
-            let pokemonId;
-            do {
-                pokemonId = Math.floor(Math.random() * 151) + 1;
-            } while (usedIds.has(pokemonId));
-            usedIds.add(pokemonId);
-            setPokemon.push(pokemonList[pokemonId - 1]);
-        }
+        // 로또 번호와 동일한 포켓몬 번호 사용 (1-45)
+        const setPokemon = numbers.map(num => pokemonList[num - 1]);
         
         const setDiv = document.createElement('div');
         setDiv.className = 'lotto-set';
@@ -1156,12 +1200,7 @@ function displayResults(sets) {
         
         const titleDiv = document.createElement('div');
         titleDiv.className = 'set-title';
-        titleDiv.innerHTML = `
-            <span>세트 ${index + 1}</span>
-            <div class="set-pokemon-icons">
-                ${setPokemon.slice(0, 3).map(p => `<img src="${p.imageUrl}" alt="${p.name}" class="set-pokemon-icon" onerror="this.src='${p.imageUrlBackup}'; this.onerror=null;">`).join('')}
-            </div>
-        `;
+        titleDiv.innerHTML = `<span>세트 ${index + 1}</span>`;
         
         const numberDiv = document.createElement('div');
         numberDiv.className = 'set-number';
@@ -1170,6 +1209,7 @@ function displayResults(sets) {
         headerDiv.appendChild(titleDiv);
         headerDiv.appendChild(numberDiv);
         
+        // 레트로 게임 스타일: 포켓몬과 번호를 함께 표시
         const numbersDiv = document.createElement('div');
         numbersDiv.className = 'numbers';
         
@@ -1177,7 +1217,7 @@ function displayResults(sets) {
             const ball = document.createElement('div');
             ball.className = `number-ball ${getNumberClass(number)}`;
             
-            // 번호 공 안에 포켓몬 이미지 추가
+            // 로또 번호와 동일한 포켓몬 번호 사용
             const pokemon = setPokemon[numIndex];
             ball.innerHTML = `
                 <img src="${pokemon.imageUrl}" alt="${pokemon.name}" class="number-ball-pokemon" onerror="this.src='${pokemon.imageUrlBackup}'; this.onerror=null;">
@@ -1209,7 +1249,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     await fetchRecentWinners();
     
     // 저장된 번호 로드
-    const savedData = await loadSavedNumbers(10);
+    const savedData = await loadSavedNumbers(100); // 페이징을 위해 더 많은 데이터 로드
+    currentSavedPage = 1; // 초기 페이지로 리셋
     displaySavedNumbers(savedData);
     
     const generateBtn = document.getElementById('generateBtn');
@@ -1260,19 +1301,12 @@ document.addEventListener('DOMContentLoaded', async function() {
             updateMessage('번호 생성 완료!');
             updateLuckBar(100);
             
-            // Supabase에 저장 (포켓몬 ID 추출)
-            const pokemonIds = sets.map(() => {
-                const ids = [];
-                for (let i = 0; i < 6; i++) {
-                    ids.push(Math.floor(Math.random() * 151) + 1);
-                }
-                return ids;
-            });
-            
-            await saveNumbersToSupabase(sets, pokemonIds);
+            // Supabase에 저장 (로또 번호 = 포켓몬 번호이므로 sets를 그대로 사용)
+            await saveNumbersToSupabase(sets, sets);
             
             // 저장된 번호 목록 새로고침
-            const savedData = await loadSavedNumbers(10);
+            const savedData = await loadSavedNumbers(100); // 페이징을 위해 더 많은 데이터 로드
+            currentSavedPage = 1; // 초기 페이지로 리셋
             displaySavedNumbers(savedData);
         } catch (error) {
             console.error('추첨 중 오류:', error);

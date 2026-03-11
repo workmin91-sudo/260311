@@ -174,13 +174,10 @@ body {
 /* 배틀 메뉴 */
 .battle-menu {
     margin-bottom: 16px;
-}
-
-.menu-box {
-    background: var(--gb-white);
-    border: 3px solid var(--gb-dark);
-    padding: 8px;
-    margin-bottom: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
 }
 
 .menu-option {
@@ -205,6 +202,37 @@ body {
     display: inline-block;
     width: 12px;
     color: var(--gb-black);
+}
+
+.fight-button {
+    background: var(--gb-green-2);
+    border: 4px solid var(--gb-dark);
+    padding: 16px 32px;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    color: var(--gb-black);
+    text-transform: uppercase;
+    text-align: center;
+    transition: all 0.1s;
+    font-family: 'Courier New', monospace;
+    border-radius: 0;
+    min-width: 200px;
+}
+
+.fight-button:hover {
+    background: var(--gb-green-3);
+    transform: scale(1.05);
+}
+
+.fight-button:active {
+    background: var(--gb-green-1);
+    transform: scale(0.98);
+}
+
+.fight-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 .input-box {
@@ -275,17 +303,20 @@ body {
 
 .numbers {
     display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    justify-content: center;
+    gap: 6px;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    width: 100%;
 }
 
 .number-ball {
-    width: 48px;
-    height: 48px;
+    flex: 1;
+    min-width: 0;
+    aspect-ratio: 1;
     border-radius: 0;
     border: 3px solid var(--gb-dark);
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     font-size: 16px;
@@ -295,14 +326,18 @@ body {
     position: relative;
     overflow: hidden;
     image-rendering: pixelated;
+    padding: 6px;
 }
 
 .number-ball-pokemon {
-    position: absolute;
-    width: 40px;
-    height: 40px;
+    width: 100%;
+    height: auto;
+    max-height: 70%;
     image-rendering: pixelated;
-    opacity: 0.6;
+    opacity: 0.9;
+    margin-bottom: 4px;
+    object-fit: contain;
+    position: relative;
     z-index: 1;
 }
 
@@ -374,33 +409,41 @@ body {
 
 .winner-numbers-compact {
     display: flex;
-    gap: 4px;
-    flex-wrap: wrap;
+    gap: 6px;
+    flex-wrap: nowrap;
     flex: 1;
+    width: 100%;
+    justify-content: space-between;
 }
 
 .winner-number-ball-compact {
-    width: 32px;
-    height: 32px;
+    flex: 1;
+    min-width: 0;
+    aspect-ratio: 1;
     border: 2px solid var(--gb-dark);
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    font-size: 10px;
+    font-size: 14px;
     font-weight: bold;
     color: var(--gb-black);
     background: var(--gb-white);
     position: relative;
     overflow: hidden;
     image-rendering: pixelated;
+    padding: 6px;
 }
 
 .winner-ball-pokemon {
-    position: absolute;
-    width: 24px;
-    height: 24px;
+    width: 100%;
+    height: auto;
+    max-height: 70%;
     image-rendering: pixelated;
-    opacity: 0.5;
+    opacity: 0.9;
+    margin-bottom: 4px;
+    object-fit: contain;
+    position: relative;
     z-index: 1;
 }
 
@@ -408,6 +451,62 @@ body {
     position: relative;
     z-index: 2;
     font-size: 10px;
+}
+
+/* 페이징 컨트롤 - 레트로 포켓몬 스타일 */
+.pagination-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    margin-top: 16px;
+    padding: 12px;
+}
+
+.pagination-btn {
+    background: var(--gb-white);
+    border: 3px solid var(--gb-dark);
+    padding: 10px 16px;
+    font-size: 18px;
+    font-weight: bold;
+    color: var(--gb-black);
+    cursor: pointer;
+    font-family: 'Courier New', monospace;
+    transition: all 0.1s;
+    min-width: 50px;
+    min-height: 50px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pagination-btn:hover:not(:disabled) {
+    background: var(--gb-green-3);
+    transform: scale(1.1);
+}
+
+.pagination-btn:active:not(:disabled) {
+    transform: scale(0.95);
+}
+
+.pagination-btn:disabled {
+    background: var(--gb-green-2);
+    opacity: 0.5;
+    cursor: not-allowed;
+    border-color: var(--gb-green-1);
+}
+
+.pagination-info {
+    font-size: 16px;
+    font-weight: bold;
+    color: var(--gb-black);
+    font-family: 'Courier New', monospace;
+    min-width: 80px;
+    text-align: center;
+    padding: 8px 12px;
+    background: var(--gb-white);
+    border: 2px solid var(--gb-dark);
 }
 
 /* 배경 포켓몬 */
