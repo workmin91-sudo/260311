@@ -830,7 +830,7 @@ async function animateLottoDrawing(finalNumbers, setIndex, totalSets) {
             if (drawnCount >= 6) {
                 // 모든 번호 추첨 완료
                 if (drawingMessage) {
-                    drawingMessage.textContent = '번호 생성 완료!';
+                    drawingMessage.textContent = '포켓몬 잡기 완료! 아래에서 잡은 포켓몬을 확인하세요!';
                 }
                 
                 // 페이드 아웃 애니메이션
@@ -1184,7 +1184,7 @@ function displayResults(sets) {
     resultsDiv.innerHTML = '';
     
     if (sets.length === 0) {
-        resultsDiv.innerHTML = '<div class="empty-state">포켓볼을 던져서 번호를 생성해주세요!</div>';
+        resultsDiv.innerHTML = '';
         return;
     }
     
@@ -1298,7 +1298,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             
             // 모든 추첨이 끝난 후 결과 표시
             displayResults(sets);
-            updateMessage('번호 생성 완료!');
+            updateMessage('포켓몬 잡기 완료! 아래에서 잡은 포켓몬을 확인하세요!');
             updateLuckBar(100);
             
             // Supabase에 저장 (로또 번호 = 포켓몬 번호이므로 sets를 그대로 사용)
@@ -1331,5 +1331,5 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     // 초기 빈 상태 표시
     displayResults([]);
-    updateMessage('포켓몬을 선택하여 번호를 생성하세요!');
+    updateMessage('FIGHT를 눌러 로또 포켓몬을 잡아보세요!');
 });
