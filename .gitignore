@@ -17,8 +17,9 @@ npm-debug.log*
 *.tmp
 *.temp
 
-# Supabase 설정 파일 (민감한 정보 포함)
-config.js
+# Supabase 설정 파일
+# config.js는 GitHub Pages 배포를 위해 포함시킴 (anon key는 공개되어도 안전)
+# config.example.js
 
 # Vercel
 .vercel
