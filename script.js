@@ -4,7 +4,22 @@ let supabaseInitialized = false;
 
 // Supabase 설정 로드 함수
 async function loadSupabaseConfig() {
-    // 1순위: API 엔드포인트에서 환경변수 읽기 (Vercel)
+    // 1순위: 전역 변수에서 읽기 (HTML에 직접 주입된 경우)
+    if (typeof window !== 'undefined' && window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
+        console.log('전역 변수에서 Supabase 설정 로드 완료');
+        return {
+            url: window.SUPABASE_URL,
+            anonKey: window.SUPABASE_ANON_KEY
+        };
+    }
+    
+    // 2순위: config.js 파일에서 읽기 (로컬 개발 및 GitHub Pages용)
+    if (typeof SUPABASE_CONFIG !== 'undefined' && SUPABASE_CONFIG.url && SUPABASE_CONFIG.anonKey) {
+        console.log('config.js에서 Supabase 설정 로드 완료');
+        return SUPABASE_CONFIG;
+    }
+    
+    // 3순위: API 엔드포인트에서 환경변수 읽기 (Vercel)
     try {
         const response = await fetch('/api/env');
         if (response.ok) {
@@ -15,22 +30,7 @@ async function loadSupabaseConfig() {
             }
         }
     } catch (error) {
-        console.log('API 엔드포인트에서 설정을 불러올 수 없습니다 (로컬 개발 모드일 수 있음):', error.message);
-    }
-    
-    // 2순위: 전역 변수에서 읽기 (HTML에 직접 주입된 경우)
-    if (typeof window !== 'undefined' && window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
-        console.log('전역 변수에서 Supabase 설정 로드 완료');
-        return {
-            url: window.SUPABASE_URL,
-            anonKey: window.SUPABASE_ANON_KEY
-        };
-    }
-    
-    // 3순위: config.js 파일에서 읽기 (로컬 개발용)
-    if (typeof SUPABASE_CONFIG !== 'undefined' && SUPABASE_CONFIG.url && SUPABASE_CONFIG.anonKey) {
-        console.log('config.js에서 Supabase 설정 로드 완료');
-        return SUPABASE_CONFIG;
+        console.log('API 엔드포인트에서 설정을 불러올 수 없습니다 (GitHub Pages 또는 로컬 개발 모드):', error.message);
     }
     
     return null;
@@ -44,9 +44,13 @@ async function initializeSupabase() {
     if (supabaseConfig && supabaseConfig.url && supabaseConfig.anonKey) {
         supabaseClient = supabase.createClient(supabaseConfig.url, supabaseConfig.anonKey);
         supabaseInitialized = true;
-        console.log('Supabase 클라이언트 초기화 완료');
+        console.log('Supabase 클라이언트 초기화 완료', { url: supabaseConfig.url });
     } else {
-        console.warn('Supabase 설정이 없습니다. Vercel 환경변수 또는 config.js를 확인하세요.');
+        console.error('Supabase 설정이 없습니다. config.js 파일을 확인하세요.');
+        console.error('현재 설정:', { 
+            hasWindowConfig: !!(typeof window !== 'undefined' && window.SUPABASE_URL),
+            hasGlobalConfig: typeof SUPABASE_CONFIG !== 'undefined'
+        });
     }
 }
 
