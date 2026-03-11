@@ -1,11 +1,13 @@
-// 1세대 포켓몬 151마리 리스트 (이름과 이미지 URL)
+// 1세대 포켓몬 151마리 리스트 (픽셀 스프라이트 사용)
 const pokemonList = [];
 for (let i = 1; i <= 151; i++) {
     pokemonList.push({
         id: i,
         name: getPokemonKoreanName(i),
-        imageUrl: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${i}.png`,
-        imageUrlShiny: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${i}.png`
+        // 게임보이 스타일 픽셀 스프라이트 사용
+        imageUrl: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/${i}.png`,
+        // 백업용 일반 스프라이트
+        imageUrlBackup: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${i}.png`
     });
 }
 
@@ -459,7 +461,7 @@ function displayRecentWinners(winners) {
         round.innerHTML = `
             <div>${winner.round}회</div>
             <div class="winner-pokemon-preview">
-                ${winnerPokemon.slice(0, 2).map(p => `<img src="${p.imageUrl}" alt="${p.name}" class="winner-pokemon-icon" onerror="this.style.display='none'">`).join('')}
+                ${winnerPokemon.slice(0, 2).map(p => `<img src="${p.imageUrl}" alt="${p.name}" class="winner-pokemon-icon" onerror="this.src='${p.imageUrlBackup}'; this.onerror=null;">`).join('')}
             </div>
         `;
         
@@ -471,7 +473,7 @@ function displayRecentWinners(winners) {
             ball.className = `winner-number-ball-compact ${getNumberClass(num)}`;
             const pokemon = winnerPokemon[numIndex];
             ball.innerHTML = `
-                <img src="${pokemon.imageUrl}" alt="${pokemon.name}" class="winner-ball-pokemon" onerror="this.style.display='none'">
+                <img src="${pokemon.imageUrl}" alt="${pokemon.name}" class="winner-ball-pokemon" onerror="this.src='${pokemon.imageUrlBackup}'; this.onerror=null;">
                 <span class="winner-ball-text">${num}</span>
             `;
             numbers.appendChild(ball);
@@ -764,22 +766,25 @@ function getNumberClass(number) {
     }
 }
 
-// 포켓볼 추첨 애니메이션
+// 배틀 스타일 추첨 애니메이션
 async function animateLottoDrawing(finalNumbers, setIndex, totalSets) {
     return new Promise((resolve) => {
         const drawingArea = document.getElementById('drawingArea');
-        const pokeball = document.getElementById('pokeball');
-        const pokemonInside = document.getElementById('pokemonInside');
         const selectedBalls = document.getElementById('selectedBalls');
-        const drawingTitle = drawingArea.querySelector('.drawing-title');
+        const drawingMessage = document.getElementById('drawingMessage');
+        const opponentPokemon = document.getElementById('opponentPokemon');
+        const playerPokemon = document.getElementById('playerPokemon');
         
-        drawingArea.style.display = 'block';
-        pokemonInside.innerHTML = '';
-        selectedBalls.innerHTML = '';
-        drawingTitle.textContent = `세트 ${setIndex + 1}/${totalSets} - 포켓볼에서 포켓몬이 나온다!`;
+        if (!drawingArea) {
+            resolve();
+            return;
+        }
         
-        // 포켓볼 회전 시작
-        pokeball.classList.add('spinning');
+        drawingArea.style.display = 'flex';
+        if (selectedBalls) selectedBalls.innerHTML = '';
+        if (opponentPokemon) opponentPokemon.innerHTML = '';
+        if (playerPokemon) playerPokemon.innerHTML = '';
+        if (drawingMessage) drawingMessage.textContent = `세트 ${setIndex + 1}/${totalSets} - 포켓몬을 선택하는 중...`;
         
         // 각 번호를 순차적으로 추첨
         let drawnCount = 0;
@@ -788,75 +793,71 @@ async function animateLottoDrawing(finalNumbers, setIndex, totalSets) {
         const drawNext = () => {
             if (drawnCount >= 6) {
                 // 모든 번호 추첨 완료
-                pokeball.classList.remove('spinning', 'slow');
+                if (drawingMessage) {
+                    drawingMessage.textContent = '번호 생성 완료!';
+                }
                 
                 // 페이드 아웃 애니메이션
-                drawingArea.style.animation = 'fadeOut 0.3s ease-out forwards';
                 setTimeout(() => {
                     drawingArea.style.display = 'none';
-                    drawingArea.style.animation = '';
                     resolve();
-                }, 300);
+                }, 1000);
                 return;
             }
             
             const finalNumber = finalNumbers[drawnCount];
             
-            // 포켓볼 속도 조절
-            if (drawnCount === 0) {
-                pokeball.classList.remove('spinning');
-                pokeball.classList.add('slow');
-            } else if (drawnCount === 3) {
-                pokeball.classList.remove('slow');
-            }
-            
             // 랜덤 포켓몬 선택
             const randomPokemon = pokemonList[Math.floor(Math.random() * pokemonList.length)];
             selectedPokemon.push(randomPokemon);
             
-            // 포켓볼 안에 포켓몬 표시
+            // 배틀 화면에 포켓몬 표시
+            if (opponentPokemon) {
+                opponentPokemon.innerHTML = `<img src="${randomPokemon.imageUrl}" alt="${randomPokemon.name}" onerror="this.src='${randomPokemon.imageUrlBackup}'; this.onerror=null;">`;
+            }
+            
+            if (drawingMessage) {
+                drawingMessage.textContent = `${randomPokemon.name.toUpperCase()}가 나타났다! 번호: ${finalNumber}`;
+            }
+            
+            // 번호가 나오는 애니메이션
             setTimeout(() => {
-                pokemonInside.innerHTML = `<img src="${randomPokemon.imageUrl}" alt="${randomPokemon.name}" class="pokemon-inside-image" onerror="this.src='${randomPokemon.imageUrlShiny}'">`;
-                
-                // 번호가 나오는 애니메이션
-                setTimeout(() => {
+                if (selectedBalls) {
                     const selectedBall = document.createElement('div');
                     selectedBall.className = `selected-ball ${getNumberClass(finalNumber)}`;
                     selectedBall.textContent = finalNumber;
                     selectedBall.style.animationDelay = `${drawnCount * 0.1}s`;
                     selectedBalls.appendChild(selectedBall);
-                    
-                    // 포켓몬 표시 업데이트
-                    updatePokemonShowcase(selectedPokemon);
-                    
-                    // 사운드 효과
-                    playRevealSound();
-                    
-                    drawnCount++;
-                    
-                    // 포켓볼 초기화
-                    setTimeout(() => {
-                        pokemonInside.innerHTML = '';
-                        if (drawnCount < 6) {
-                            setTimeout(drawNext, 400);
-                        } else {
-                            drawNext();
-                        }
-                    }, 600);
-                }, 800);
-            }, 500 + drawnCount * 300);
+                }
+                
+                // 포켓몬 표시 업데이트
+                updatePokemonShowcase(selectedPokemon);
+                
+                // 사운드 효과
+                playRevealSound();
+                
+                drawnCount++;
+                
+                // 다음 번호 추첨
+                if (drawnCount < 6) {
+                    setTimeout(drawNext, 600);
+                } else {
+                    drawNext();
+                }
+            }, 800);
         };
         
         // 첫 번째 추첨 시작
         setTimeout(() => {
             drawNext();
-        }, 800);
+        }, 500);
     });
 }
 
 // 포켓몬 쇼케이스 업데이트
 function updatePokemonShowcase(pokemonArray) {
     const showcase = document.getElementById('pokemonShowcase');
+    if (!showcase) return;
     showcase.innerHTML = '';
     
     pokemonArray.forEach((poke, index) => {
@@ -864,7 +865,7 @@ function updatePokemonShowcase(pokemonArray) {
         card.className = 'pokemon-card';
         card.style.animationDelay = `${index * 0.1}s`;
         card.innerHTML = `
-            <img src="${poke.imageUrl}" alt="${poke.name}" class="pokemon-card-image" onerror="this.src='${poke.imageUrlShiny}'">
+            <img src="${poke.imageUrl}" alt="${poke.name}" class="pokemon-card-image" onerror="this.src='${poke.imageUrlBackup}'; this.onerror=null;">
             <div class="pokemon-card-name">${poke.name}</div>
             <div class="pokemon-card-id">#${String(poke.id).padStart(3, '0')}</div>
         `;
@@ -872,13 +873,41 @@ function updatePokemonShowcase(pokemonArray) {
     });
 }
 
-// 배경에 포켓몬 추가
+// 메시지 박스 업데이트
+function updateMessage(text) {
+    const messageBox = document.getElementById('messageBox');
+    if (messageBox) {
+        const messageText = messageBox.querySelector('.message-text');
+        if (messageText) {
+            messageText.textContent = text.toUpperCase();
+        }
+    }
+}
+
+// 행운 바 업데이트
+function updateLuckBar(percentage) {
+    const luckBar = document.getElementById('luckBar');
+    if (luckBar) {
+        luckBar.style.width = percentage + '%';
+    }
+}
+
+// 트레이너 캐릭터 표시
+function displayTrainer() {
+    const trainerSprite = document.getElementById('trainerSprite');
+    // 트레이너 스프라이트는 CSS로 표시하거나 이모지로 대체
+    trainerSprite.textContent = '👤';
+    trainerSprite.style.fontSize = '48px';
+}
+
+// 배경에 포켓몬 추가 (픽셀 스프라이트)
 function addBackgroundPokemon() {
     const bg = document.getElementById('pokemonBackground');
+    if (!bg) return;
     
-    // 1세대 포켓몬 중 랜덤으로 50마리 배경에 추가
+    // 1세대 포켓몬 중 랜덤으로 30마리 배경에 추가
     const usedIds = new Set();
-    for (let i = 0; i < 50; i++) {
+    for (let i = 0; i < 30; i++) {
         let pokemonId;
         do {
             pokemonId = Math.floor(Math.random() * 151) + 1;
@@ -887,41 +916,14 @@ function addBackgroundPokemon() {
         
         const pokemon = document.createElement('div');
         pokemon.className = 'pokemon-float';
-        pokemon.innerHTML = `<img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemonId}.png" alt="포켓몬${pokemonId}" class="pokemon-bg-image" onerror="this.style.display='none'">`;
+        const pokemonData = pokemonList[pokemonId - 1];
+        pokemon.innerHTML = `<img src="${pokemonData.imageUrl}" alt="${pokemonData.name}" class="pokemon-bg-image" onerror="this.src='${pokemonData.imageUrlBackup}'; this.onerror=null;">`;
         pokemon.style.left = Math.random() * 100 + '%';
         pokemon.style.top = Math.random() * 100 + '%';
         pokemon.style.animationDelay = Math.random() * 8 + 's';
         pokemon.style.animationDuration = (6 + Math.random() * 4) + 's';
         bg.appendChild(pokemon);
     }
-}
-
-// 헤더에 포켓몬 추가
-function addHeaderPokemon() {
-    const headerPokemon = document.getElementById('headerPokemon');
-    const randomIds = [];
-    const usedIds = new Set();
-    
-    // 6마리 랜덤 포켓몬 선택
-    while (randomIds.length < 6) {
-        const id = Math.floor(Math.random() * 151) + 1;
-        if (!usedIds.has(id)) {
-            randomIds.push(id);
-            usedIds.add(id);
-        }
-    }
-    
-    randomIds.forEach((id, index) => {
-        const pokemon = document.createElement('img');
-        pokemon.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`;
-        pokemon.alt = `포켓몬${id}`;
-        pokemon.className = 'pokemon-emoji';
-        pokemon.style.animationDelay = `${index * 0.2}s`;
-        pokemon.onerror = function() {
-            this.style.display = 'none';
-        };
-        headerPokemon.appendChild(pokemon);
-    });
 }
 
 // 랜덤 그라데이션 생성
@@ -1005,7 +1007,7 @@ function displayResults(sets) {
         titleDiv.innerHTML = `
             <span>세트 ${index + 1}</span>
             <div class="set-pokemon-icons">
-                ${setPokemon.slice(0, 3).map(p => `<img src="${p.imageUrl}" alt="${p.name}" class="set-pokemon-icon" onerror="this.style.display='none'">`).join('')}
+                ${setPokemon.slice(0, 3).map(p => `<img src="${p.imageUrl}" alt="${p.name}" class="set-pokemon-icon" onerror="this.src='${p.imageUrlBackup}'; this.onerror=null;">`).join('')}
             </div>
         `;
         
@@ -1026,7 +1028,7 @@ function displayResults(sets) {
             // 번호 공 안에 포켓몬 이미지 추가
             const pokemon = setPokemon[numIndex];
             ball.innerHTML = `
-                <img src="${pokemon.imageUrl}" alt="${pokemon.name}" class="number-ball-pokemon" onerror="this.style.display='none'">
+                <img src="${pokemon.imageUrl}" alt="${pokemon.name}" class="number-ball-pokemon" onerror="this.src='${pokemon.imageUrlBackup}'; this.onerror=null;">
                 <span class="number-ball-text">${number}</span>
             `;
             
@@ -1042,11 +1044,11 @@ function displayResults(sets) {
 
 // 이벤트 리스너 설정
 document.addEventListener('DOMContentLoaded', async function() {
+    // 트레이너 표시
+    displayTrainer();
+    
     // 배경에 포켓몬 추가
     addBackgroundPokemon();
-    
-    // 헤더에 포켓몬 추가
-    addHeaderPokemon();
     
     // 최근 당첨번호 로드
     await fetchRecentWinners();
@@ -1054,13 +1056,26 @@ document.addEventListener('DOMContentLoaded', async function() {
     const generateBtn = document.getElementById('generateBtn');
     const setCountInput = document.getElementById('setCount');
     
+    // 배틀 메뉴 옵션 선택 효과
+    const menuOptions = document.querySelectorAll('.menu-option');
+    menuOptions.forEach(option => {
+        option.addEventListener('click', function() {
+            menuOptions.forEach(opt => opt.classList.remove('selected'));
+            this.classList.add('selected');
+        });
+    });
+    
     generateBtn.addEventListener('click', async function() {
         const setCount = parseInt(setCountInput.value) || 1;
         const sets = [];
         
         // 버튼 비활성화
         generateBtn.disabled = true;
-        generateBtn.innerHTML = '<span class="btn-pokemon">⚡</span><span>포켓볼 던지는 중...</span><span class="btn-pokemon">🔥</span>';
+        generateBtn.innerHTML = '<span class="menu-cursor">►</span>FIGHTING...';
+        
+        // 메시지 업데이트
+        updateMessage('포켓몬을 선택하는 중...');
+        updateLuckBar(0);
         
         // 결과 영역 초기화
         const resultsDiv = document.getElementById('results');
@@ -1069,6 +1084,10 @@ document.addEventListener('DOMContentLoaded', async function() {
         try {
             // 각 세트를 순차적으로 추첨
             for (let i = 0; i < setCount; i++) {
+                // 행운 바 업데이트
+                updateLuckBar(((i + 1) / setCount) * 100);
+                updateMessage(`세트 ${i + 1}/${setCount} 생성 중...`);
+                
                 // 번호 생성
                 const numbers = generateLottoNumbers();
                 sets.push(numbers);
@@ -1079,13 +1098,19 @@ document.addEventListener('DOMContentLoaded', async function() {
             
             // 모든 추첨이 끝난 후 결과 표시
             displayResults(sets);
+            updateMessage('번호 생성 완료!');
+            updateLuckBar(100);
         } catch (error) {
             console.error('추첨 중 오류:', error);
             displayResults(sets);
+            updateMessage('오류가 발생했습니다.');
         } finally {
             // 버튼 다시 활성화
-            generateBtn.disabled = false;
-            generateBtn.innerHTML = '<span class="btn-pokemon">⚡</span><span>포켓볼 던지기!</span><span class="btn-pokemon">🔥</span>';
+            setTimeout(() => {
+                generateBtn.disabled = false;
+                generateBtn.innerHTML = '<span class="menu-cursor">►</span>FIGHT';
+                updateLuckBar(100);
+            }, 1000);
         }
     });
     
@@ -1098,4 +1123,5 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     // 초기 빈 상태 표시
     displayResults([]);
+    updateMessage('포켓몬을 선택하여 번호를 생성하세요!');
 });

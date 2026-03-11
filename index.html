@@ -3,68 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>포켓몬 로또 - 포켓몬을 잡아라!</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <title>포켓몬 로또 - 게임보이 스타일</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="pokemon-background" id="pokemonBackground"></div>
-    
-    <div id="drawingArea" class="drawing-area" style="display: none;">
-        <div class="drawing-content">
-            <div class="drawing-title">포켓볼에서 포켓몬이 나온다!</div>
-            <div class="pokeball-container">
-                <div class="pokeball" id="pokeball">
-                    <div class="pokeball-top"></div>
-                    <div class="pokeball-bottom"></div>
-                    <div class="pokeball-center"></div>
-                    <div id="pokemonInside" class="pokemon-inside"></div>
+    <div class="gameboy-screen">
+        <div class="screen-border">
+            <div class="screen-content">
+                <!-- 배틀 화면 스타일 헤더 -->
+                <div class="battle-header">
+                    <div class="trainer-sprite" id="trainerSprite"></div>
+                    <div class="battle-info">
+                        <div class="hp-bar-container">
+                            <div class="hp-label">LUCK</div>
+                            <div class="hp-bar">
+                                <div class="hp-fill" id="luckBar"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+
+                <!-- 포켓몬 쇼케이스 -->
+                <div class="pokemon-showcase" id="pokemonShowcase"></div>
+
+                <!-- 배틀 메뉴 스타일 컨트롤 -->
+                <div class="battle-menu">
+                    <div class="menu-box">
+                        <div class="menu-option" id="generateBtn">
+                            <span class="menu-cursor">►</span>FIGHT
+                        </div>
+                        <div class="menu-option">
+                            <span class="menu-cursor"> </span>PKMN
+                        </div>
+                        <div class="menu-option">
+                            <span class="menu-cursor"> </span>PACK
+                        </div>
+                        <div class="menu-option">
+                            <span class="menu-cursor"> </span>RUN
+                        </div>
+                    </div>
+                    <div class="input-box">
+                        <div class="text-box">
+                            <span>SET COUNT:</span>
+                            <input type="number" id="setCount" min="1" max="10" value="1" class="pixel-input">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 결과 표시 영역 -->
+                <div id="results" class="results"></div>
+
+                <!-- 메시지 박스 -->
+                <div class="message-box" id="messageBox">
+                    <div class="message-text">포켓몬을 선택하여 번호를 생성하세요!</div>
+                </div>
+
+                <!-- 최근 당첨번호 -->
+                <div class="recent-section">
+                    <div class="section-title">RECENT WINNERS</div>
+                    <div id="recentWinners" class="recent-winners">
+                        <div class="loading">로딩 중...</div>
+                    </div>
+                </div>
+
+                <!-- 배경 포켓몬들 -->
+                <div class="pokemon-background" id="pokemonBackground"></div>
             </div>
-            <div id="selectedBalls" class="selected-balls"></div>
         </div>
     </div>
 
-    <div class="container">
-        <header>
-            <div class="pokemon-header">
-                <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png" alt="피카츄" class="header-pokemon">
-                <h1>포켓몬 로또</h1>
-                <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/6.png" alt="리자몽" class="header-pokemon">
-            </div>
-            <p>포켓몬을 잡아서 행운의 번호를 얻어라!</p>
-            <div class="pokemon-decorations" id="headerPokemon"></div>
-        </header>
-
-        <div class="pokemon-showcase" id="pokemonShowcase"></div>
-
-        <div class="controls">
-            <div class="input-group">
-                <label for="setCount">
-                    <span class="pokemon-label-icon">🎯</span>
-                    생성할 세트 수
-                </label>
-                <input type="number" id="setCount" min="1" max="10" value="1">
-            </div>
-            <button id="generateBtn" class="generate-btn pokeball-btn">
-                <span class="btn-pokemon">⚡</span>
-                <span>포켓볼 던지기!</span>
-                <span class="btn-pokemon">🔥</span>
-            </button>
-        </div>
-
-        <div id="results" class="results"></div>
-
-        <div class="recent-winners-section">
-            <h2>
-                <span class="pokemon-icon">🏆</span>
-                최근 5회 당첨번호
-                <span class="pokemon-icon">🏆</span>
-            </h2>
-            <div id="recentWinners" class="recent-winners-compact">
-                <div class="loading">포켓몬이 당첨번호를 불러오는 중...</div>
+    <!-- 추첨 애니메이션 영역 -->
+    <div id="drawingArea" class="drawing-area" style="display: none;">
+        <div class="drawing-content">
+            <div class="battle-screen">
+                <div class="opponent-pokemon" id="opponentPokemon"></div>
+                <div class="player-pokemon" id="playerPokemon"></div>
+                <div class="battle-message">
+                    <div class="message-box">
+                        <div class="message-text" id="drawingMessage">포켓볼에서 포켓몬이 나온다!</div>
+                    </div>
+                </div>
+                <div id="selectedBalls" class="selected-balls"></div>
             </div>
         </div>
     </div>
