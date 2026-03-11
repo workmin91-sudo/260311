@@ -1,3 +1,55 @@
+// Supabase 클라이언트 초기화 (Vercel 환경변수 또는 config.js 사용)
+let supabaseClient = null;
+let supabaseInitialized = false;
+
+// Supabase 설정 로드 함수
+async function loadSupabaseConfig() {
+    // 1순위: API 엔드포인트에서 환경변수 읽기 (Vercel)
+    try {
+        const response = await fetch('/api/env');
+        if (response.ok) {
+            const config = await response.json();
+            if (config.url && config.anonKey) {
+                console.log('Vercel 환경변수에서 Supabase 설정 로드 완료');
+                return config;
+            }
+        }
+    } catch (error) {
+        console.log('API 엔드포인트에서 설정을 불러올 수 없습니다 (로컬 개발 모드일 수 있음):', error.message);
+    }
+    
+    // 2순위: 전역 변수에서 읽기 (HTML에 직접 주입된 경우)
+    if (typeof window !== 'undefined' && window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
+        console.log('전역 변수에서 Supabase 설정 로드 완료');
+        return {
+            url: window.SUPABASE_URL,
+            anonKey: window.SUPABASE_ANON_KEY
+        };
+    }
+    
+    // 3순위: config.js 파일에서 읽기 (로컬 개발용)
+    if (typeof SUPABASE_CONFIG !== 'undefined' && SUPABASE_CONFIG.url && SUPABASE_CONFIG.anonKey) {
+        console.log('config.js에서 Supabase 설정 로드 완료');
+        return SUPABASE_CONFIG;
+    }
+    
+    return null;
+}
+
+// Supabase 클라이언트 초기화 함수
+async function initializeSupabase() {
+    if (supabaseInitialized) return;
+    
+    const supabaseConfig = await loadSupabaseConfig();
+    if (supabaseConfig && supabaseConfig.url && supabaseConfig.anonKey) {
+        supabaseClient = supabase.createClient(supabaseConfig.url, supabaseConfig.anonKey);
+        supabaseInitialized = true;
+        console.log('Supabase 클라이언트 초기화 완료');
+    } else {
+        console.warn('Supabase 설정이 없습니다. Vercel 환경변수 또는 config.js를 확인하세요.');
+    }
+}
+
 // 1세대 포켓몬 151마리 리스트 (픽셀 스프라이트 사용)
 const pokemonList = [];
 for (let i = 1; i <= 151; i++) {
@@ -973,6 +1025,106 @@ function playRevealSound() {
     }
 }
 
+// Supabase에 번호 저장
+async function saveNumbersToSupabase(sets, pokemonIds) {
+    if (!supabaseClient) {
+        console.warn('Supabase가 설정되지 않았습니다. config.js 파일을 확인하세요.');
+        return null;
+    }
+    
+    try {
+        const records = sets.map((numbers, index) => ({
+            numbers: numbers,
+            set_count: sets.length,
+            pokemon_ids: pokemonIds[index] || [],
+            user_ip: null, // 필요시 추가
+            user_agent: navigator.userAgent
+        }));
+        
+        const { data, error } = await supabaseClient
+            .from('lotto_numbers')
+            .insert(records)
+            .select();
+        
+        if (error) {
+            console.error('Supabase 저장 오류:', error);
+            return null;
+        }
+        
+        console.log('번호가 성공적으로 저장되었습니다:', data);
+        return data;
+    } catch (error) {
+        console.error('저장 중 오류 발생:', error);
+        return null;
+    }
+}
+
+// Supabase에서 저장된 번호 조회
+async function loadSavedNumbers(limit = 10) {
+    if (!supabaseClient) {
+        console.warn('Supabase가 설정되지 않았습니다.');
+        return [];
+    }
+    
+    try {
+        const { data, error } = await supabaseClient
+            .from('lotto_numbers')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(limit);
+        
+        if (error) {
+            console.error('Supabase 조회 오류:', error);
+            return [];
+        }
+        
+        return data || [];
+    } catch (error) {
+        console.error('조회 중 오류 발생:', error);
+        return [];
+    }
+}
+
+// 저장된 번호 표시
+function displaySavedNumbers(savedData) {
+    const container = document.getElementById('savedNumbers');
+    if (!container) return;
+    
+    if (savedData.length === 0) {
+        container.innerHTML = '<div class="loading">저장된 번호가 없습니다.</div>';
+        return;
+    }
+    
+    container.innerHTML = '';
+    
+    savedData.forEach((record, index) => {
+        const item = document.createElement('div');
+        item.className = 'winner-item-compact';
+        
+        const round = document.createElement('div');
+        round.className = 'winner-round-compact';
+        const date = new Date(record.created_at);
+        round.innerHTML = `
+            <div>${date.toLocaleDateString('ko-KR')}</div>
+            <div style="font-size: 8px; color: #666;">${date.toLocaleTimeString('ko-KR')}</div>
+        `;
+        
+        const numbers = document.createElement('div');
+        numbers.className = 'winner-numbers-compact';
+        
+        record.numbers.forEach((num) => {
+            const ball = document.createElement('div');
+            ball.className = `winner-number-ball-compact ${getNumberClass(num)}`;
+            ball.innerHTML = `<span class="winner-ball-text">${num}</span>`;
+            numbers.appendChild(ball);
+        });
+        
+        item.appendChild(round);
+        item.appendChild(numbers);
+        container.appendChild(item);
+    });
+}
+
 // 결과 표시 함수
 function displayResults(sets) {
     const resultsDiv = document.getElementById('results');
@@ -1044,6 +1196,9 @@ function displayResults(sets) {
 
 // 이벤트 리스너 설정
 document.addEventListener('DOMContentLoaded', async function() {
+    // Supabase 초기화 (Vercel 환경변수 또는 config.js 사용)
+    await initializeSupabase();
+    
     // 트레이너 표시
     displayTrainer();
     
@@ -1052,6 +1207,10 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     // 최근 당첨번호 로드
     await fetchRecentWinners();
+    
+    // 저장된 번호 로드
+    const savedData = await loadSavedNumbers(10);
+    displaySavedNumbers(savedData);
     
     const generateBtn = document.getElementById('generateBtn');
     const setCountInput = document.getElementById('setCount');
@@ -1100,6 +1259,21 @@ document.addEventListener('DOMContentLoaded', async function() {
             displayResults(sets);
             updateMessage('번호 생성 완료!');
             updateLuckBar(100);
+            
+            // Supabase에 저장 (포켓몬 ID 추출)
+            const pokemonIds = sets.map(() => {
+                const ids = [];
+                for (let i = 0; i < 6; i++) {
+                    ids.push(Math.floor(Math.random() * 151) + 1);
+                }
+                return ids;
+            });
+            
+            await saveNumbersToSupabase(sets, pokemonIds);
+            
+            // 저장된 번호 목록 새로고침
+            const savedData = await loadSavedNumbers(10);
+            displaySavedNumbers(savedData);
         } catch (error) {
             console.error('추첨 중 오류:', error);
             displayResults(sets);

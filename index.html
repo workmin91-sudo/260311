@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>포켓몬 로또 - 게임보이 스타일</title>
     <link rel="stylesheet" href="style.css">
+    <!-- Supabase 클라이언트 라이브러리 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
     <div class="gameboy-screen">
@@ -58,6 +60,14 @@
                     <div class="message-text">포켓몬을 선택하여 번호를 생성하세요!</div>
                 </div>
 
+                <!-- 저장된 번호 -->
+                <div class="recent-section">
+                    <div class="section-title">SAVED NUMBERS</div>
+                    <div id="savedNumbers" class="recent-winners">
+                        <div class="loading">저장된 번호를 불러오는 중...</div>
+                    </div>
+                </div>
+
                 <!-- 최근 당첨번호 -->
                 <div class="recent-section">
                     <div class="section-title">RECENT WINNERS</div>
@@ -88,6 +98,21 @@
         </div>
     </div>
 
+    <!-- Supabase 환경변수 주입 (Vercel 환경변수를 여기에 주입) -->
+    <script>
+        // Vercel 환경변수는 빌드 타임에 주입되므로,
+        // 서버 사이드 렌더링이 필요하거나, 
+        // 또는 환경변수를 직접 여기에 설정해야 합니다.
+        // 
+        // 방법 1: Vercel 환경변수를 직접 설정 (보안 주의)
+        // window.SUPABASE_URL = '%PUBLIC_SUPABASE_URL%';
+        // window.SUPABASE_ANON_KEY = '%PUBLIC_SUPABASE_ANON_KEY%';
+        //
+        // 방법 2: config.js 파일 사용 (로컬 개발용)
+        // 아래 스크립트가 config.js를 로드합니다
+    </script>
+    <!-- Supabase 설정 (로컬 개발용 config.js, Vercel에서는 환경변수 사용) -->
+    <script src="config.js" onerror="console.log('config.js 파일이 없습니다. Vercel 환경변수를 사용하세요.')"></script>
     <script src="script.js"></script>
 </body>
 </html>
